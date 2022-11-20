@@ -21,3 +21,16 @@ func TestTrivial(t *testing.T) {
 	assert.True(t, f.LookupString("bye"))
 	assert.True(t, f.LookupString("hellow"))
 }
+
+func BenchmarkTrivial(b *testing.B) {
+	f := NewFilter(4096, 5)
+
+	f.AddString("whatever")
+
+	for i := 0; i < b.N; i++ {
+		f.LookupString("I eat a log")
+		f.LookupString("we be blue")
+		f.LookupString("I think it was a bee")
+		f.LookupString("and I flee a salami")
+	}
+}
