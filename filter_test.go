@@ -1,6 +1,7 @@
 package bloomzinho
 
 import (
+	"crypto/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,4 +34,45 @@ func BenchmarkTrivial(b *testing.B) {
 		f.LookupString("I think it was a bee")
 		f.LookupString("and I flee a salami")
 	}
+}
+
+func BenchmarkFalsePositive(b *testing.B) {
+	var alea string
+	si := 0
+	seed := func() {
+		m := make([]byte, 12_000)
+		rand.Read(m)
+		alea = string(m)
+		si = 0
+	}
+	gimme := func(n int) string {
+		st := si
+		si = st + n
+		return alea[st:si]
+	}
+
+	b.ResetTimer()
+
+	positive := 0.0
+	total := 0.0
+	for t := 0; t < b.N; t++ {
+		b.StopTimer()
+		seed()
+		f := NewFilter(256, 2)
+		for i := 0; i < 16; i++ {
+			st := gimme(16)
+			f.AddString(st)
+		}
+		b.StartTimer()
+
+		for i := 0; i < 1000; i++ {
+			st := gimme(10)
+			if f.LookupString(st) {
+				positive++
+			}
+			total++
+		}
+	}
+
+	b.ReportMetric((positive/total)*100, "%FalsePositives")
 }
