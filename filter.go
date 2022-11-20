@@ -32,7 +32,14 @@ func (f *Filter) AddString(s string) {
 }
 
 func (f *Filter) LookupString(s string) bool {
-	return false
+	h := f.doHashString(s)
+
+	for _, v := range h {
+		if !f.isSet(v) {
+			return false
+		}
+	}
+	return true
 }
 
 func (f *Filter) doHashString(s string) []int {
@@ -68,4 +75,15 @@ func (f *Filter) set(i int) {
 	mask := uint8(1 << shift)
 
 	f.state[bucket] |= mask
+}
+
+func (f *Filter) isSet(i int) bool {
+	bucket := i / 8
+	shift := i % 8
+
+	mask := uint8(1 << shift)
+
+	set := f.state[bucket]&mask != 0
+
+	return set
 }
