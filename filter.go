@@ -12,13 +12,16 @@ type Filter struct {
 	bph   int
 }
 
+// bpb is bits per bucket (Filter.state element)
+const bpb = 8
+
 func NewFilter(bits, hashes int) *Filter {
 	if bits < 1 || hashes < 1 {
 		panic("params needs to be a higher than 0")
 	}
 
-	if mod := bits % 8; mod != 0 {
-		bits += 8 - mod
+	if mod := bits % bpb; mod != 0 {
+		bits += bpb - mod
 	}
 
 	//-1 because arrays are 0 idexed
@@ -31,7 +34,7 @@ func NewFilter(bits, hashes int) *Filter {
 	}
 	return &Filter{
 		seed:  maphash.MakeSeed(),
-		state: make([]uint8, bits/8),
+		state: make([]uint8, bits/bpb),
 		nhsh:  hashes,
 		bph:   needs,
 	}
@@ -71,7 +74,7 @@ func (f *Filter) LookupBytes(b []byte) bool {
 
 func (f *Filter) hashToIndexes(hash uint64) []int {
 	bph := f.bph
-	max := uint64(len(f.state) * 8)
+	max := uint64(len(f.state) * bpb)
 	mask := (uint64(1) << f.bph) - 1
 	idx := make([]int, 0, 8)
 
@@ -87,8 +90,8 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 }
 
 func (f *Filter) set(i int) {
-	bucket := i / 8
-	shift := i % 8
+	bucket := i / bpb
+	shift := i % bpb
 
 	mask := uint8(1 << shift)
 
@@ -97,8 +100,8 @@ func (f *Filter) set(i int) {
 
 func (f *Filter) lookup(idx []int) bool {
 	for _, v := range idx {
-		bucket := v / 8
-		shift := v % 8
+		bucket := v / bpb
+		shift := v % bpb
 
 		mask := uint8(1 << shift)
 
