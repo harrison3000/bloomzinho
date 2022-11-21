@@ -34,7 +34,9 @@ func NewFilter(bits, hashes int) *Filter {
 }
 
 func (f *Filter) AddString(s string) {
-	h := f.doHashString(s)
+	var h = make([]int, 0, 8)
+	hash := maphash.String(f.seed, s)
+	h = f.hashToIndexes(hash, h)
 
 	for _, v := range h {
 		f.set(v)
@@ -42,7 +44,9 @@ func (f *Filter) AddString(s string) {
 }
 
 func (f *Filter) LookupString(s string) bool {
-	h := f.doHashString(s)
+	var h = make([]int, 0, 8)
+	hash := maphash.String(f.seed, s)
+	h = f.hashToIndexes(hash, h)
 
 	for _, v := range h {
 		if !f.isSet(v) {
@@ -52,24 +56,20 @@ func (f *Filter) LookupString(s string) bool {
 	return true
 }
 
-func (f *Filter) doHashString(s string) []int {
-	hash := maphash.String(f.seed, s)
-
+func (f *Filter) hashToIndexes(hash uint64, idx []int) []int {
 	bph := f.bph
 	max := uint64(len(f.state) * 8)
 	mask := (uint64(1) << f.bph) - 1
 
-	var ret []int
-
 	for i := 0; i < f.nhsh; i++ {
 		h := hash & mask
 		h %= max
-		ret = append(ret, int(h))
+		idx = append(idx, int(h))
 
 		hash >>= bph
 	}
 
-	return ret
+	return idx
 }
 
 func (f *Filter) set(i int) {
