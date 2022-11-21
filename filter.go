@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"hash"
 	"hash/fnv"
+	b "math/bits"
 )
 
 type Filter struct {
@@ -15,6 +16,15 @@ type Filter struct {
 func NewFilter(bits, hashes int) *Filter {
 	if bits%8 != 0 {
 		bits += 8
+	}
+	if bits < 1 {
+		panic("bits need to be a higher than 0")
+	}
+	lz := b.LeadingZeros64(uint64(bits))
+	needs := 64 - lz
+	if needs*hashes > 64 {
+		//TODO do 2 hashes?
+		panic("too... much... data...")
 	}
 	return &Filter{
 		h:     fnv.New128a(),
