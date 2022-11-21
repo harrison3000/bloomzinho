@@ -13,11 +13,12 @@ type Filter struct {
 }
 
 func NewFilter(bits, hashes int) *Filter {
-	if bits%8 != 0 {
-		bits += 8
-	}
 	if bits < 1 {
 		panic("bits need to be a higher than 0")
+	}
+
+	if mod := bits % 8; mod != 0 {
+		bits += 8 - mod
 	}
 
 	//-1 because arrays are 0 idexed
