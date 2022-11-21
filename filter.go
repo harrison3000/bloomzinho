@@ -1,16 +1,15 @@
 package bloomzinho
 
 import (
-	"encoding/binary"
-	"hash"
-	"hash/fnv"
+	"hash/maphash"
 	b "math/bits"
 )
 
 type Filter struct {
-	h     hash.Hash
+	seed  maphash.Seed
 	state []uint8
-	nh    int
+	nhsh  int
+	bph   int
 }
 
 func NewFilter(bits, hashes int) *Filter {
@@ -27,9 +26,10 @@ func NewFilter(bits, hashes int) *Filter {
 		panic("too... much... data...")
 	}
 	return &Filter{
-		h:     fnv.New128a(),
+		seed:  maphash.MakeSeed(),
 		state: make([]uint8, bits/8),
-		nh:    hashes,
+		nhsh:  hashes,
+		bph:   needs,
 	}
 }
 
@@ -53,26 +53,20 @@ func (f *Filter) LookupString(s string) bool {
 }
 
 func (f *Filter) doHashString(s string) []int {
-	f.h.Reset()
-	f.h.Write([]byte(s))
-	hash := f.h.Sum(nil)
+	hash := maphash.String(f.seed, s)
 
-	nbits := len(f.state) * 8
-
-	if nbits > 65000 || f.nh > 8 {
-		panic("we dont do that here (yet)")
-	}
+	bph := f.bph
+	max := uint64(len(f.state) * 8)
+	mask := (uint64(1) << f.bph) - 1
 
 	var ret []int
 
-	for i := 0; i < f.nh; i++ {
-		idx := i * 2
+	for i := 0; i < f.nhsh; i++ {
+		h := hash & mask
+		h %= max
+		ret = append(ret, int(h))
 
-		h := int(binary.LittleEndian.Uint16(hash[idx:]))
-
-		h %= nbits
-
-		ret = append(ret, h)
+		hash >>= bph
 	}
 
 	return ret
