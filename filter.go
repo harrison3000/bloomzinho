@@ -19,7 +19,7 @@ func NewFilter(bits, hashes int) *Filter {
 	if bits < 1 {
 		panic("bits need to be a higher than 0")
 	}
-	lz := b.LeadingZeros64(uint64(bits))
+	lz := b.LeadingZeros64(uint64(bits) - 1) //-1 because arrays are 0 idexed
 	needs := 64 - lz
 	if needs*hashes > 64 {
 		//TODO do 2 hashes?
