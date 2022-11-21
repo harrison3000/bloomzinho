@@ -43,7 +43,7 @@ func TestLookup(t *testing.T) {
 }
 
 func BenchmarkTrivial(b *testing.B) {
-	f := NewFilter(4096, 5)
+	f := NewFilter(9585059, 7)
 
 	f.AddString("whatever")
 
@@ -59,7 +59,7 @@ func BenchmarkFalsePositive(b *testing.B) {
 	var alea string
 	si := 0
 	seed := func() {
-		m := make([]byte, 12_000)
+		m := make([]byte, 100_000)
 		rand.Read(m)
 		alea = string(m)
 		si = 0
@@ -77,15 +77,15 @@ func BenchmarkFalsePositive(b *testing.B) {
 	for t := 0; t < b.N; t++ {
 		b.StopTimer()
 		seed()
-		f := NewFilter(256, 2)
-		for i := 0; i < 16; i++ {
+		f := NewFilter(4096, 4)
+		for i := 0; i < 128; i++ {
 			st := gimme(16)
 			f.AddString(st)
 		}
 		b.StartTimer()
 
-		for i := 0; i < 1000; i++ {
-			st := gimme(10)
+		for i := 0; i < 10000; i++ {
+			st := gimme(1 + i%8)
 			if f.LookupString(st) {
 				positive++
 			}
