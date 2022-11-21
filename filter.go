@@ -13,8 +13,8 @@ type Filter struct {
 }
 
 func NewFilter(bits, hashes int) *Filter {
-	if bits < 1 {
-		panic("bits need to be a higher than 0")
+	if bits < 1 || hashes < 1 {
+		panic("params needs to be a higher than 0")
 	}
 
 	if mod := bits % 8; mod != 0 {
@@ -108,5 +108,5 @@ func (f *Filter) lookup(idx []int) bool {
 		}
 	}
 
-	return true
+	return len(idx) != 0
 }

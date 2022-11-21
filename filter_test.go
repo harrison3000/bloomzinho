@@ -25,6 +25,23 @@ func TestTrivial(t *testing.T) {
 	assert.True(t, f.LookupBytes([]byte("okay")))
 }
 
+func TestLookup(t *testing.T) {
+	qtd := 257
+	nud := []int{63, 47, 94}
+
+	f := NewFilter(qtd, 1)
+	for _, v := range nud {
+		f.set(v)
+	}
+
+	assert.False(t, f.lookup([]int{63, 25}))
+	assert.False(t, f.lookup([]int{63, 47, 94, 2}))
+	assert.False(t, f.lookup([]int{0}))
+	assert.False(t, f.lookup(nil))
+	assert.True(t, f.lookup(nud[:2]))
+	assert.True(t, f.lookup(nud))
+}
+
 func BenchmarkTrivial(b *testing.B) {
 	f := NewFilter(4096, 5)
 
