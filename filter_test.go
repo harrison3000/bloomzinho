@@ -12,15 +12,17 @@ func TestTrivial(t *testing.T) {
 
 	f.AddString("hellow")
 	f.AddString("okay")
-	f.AddString("bye")
+	f.AddBytes([]byte("bye"))
 
 	//TODO sometimes there are false positives and the test fails...
 	//needs to make this test probabilistic somehow
 	assert.False(t, f.LookupString("eita"))
 	assert.False(t, f.LookupString("parafuso"))
+	assert.False(t, f.LookupBytes([]byte("água de coco")))
 
 	assert.True(t, f.LookupString("bye"))
 	assert.True(t, f.LookupString("hellow"))
+	assert.True(t, f.LookupBytes([]byte("okay")))
 }
 
 func BenchmarkTrivial(b *testing.B) {

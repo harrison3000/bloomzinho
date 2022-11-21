@@ -58,6 +58,27 @@ func (f *Filter) LookupString(s string) bool {
 	return true
 }
 
+func (f *Filter) AddBytes(b []byte) {
+	hash := maphash.Bytes(f.seed, b)
+	h := f.hashToIndexes(hash)
+
+	for _, v := range h {
+		f.set(v)
+	}
+}
+
+func (f *Filter) LookupBytes(b []byte) bool {
+	hash := maphash.Bytes(f.seed, b)
+	h := f.hashToIndexes(hash)
+
+	for _, v := range h {
+		if !f.isSet(v) {
+			return false
+		}
+	}
+	return true
+}
+
 func (f *Filter) hashToIndexes(hash uint64) []int {
 	bph := f.bph
 	max := uint64(len(f.state) * 8)
