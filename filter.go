@@ -26,8 +26,7 @@ func NewFilter(bits, hashes int) *Filter {
 
 	//-1 because arrays are 0 idexed
 	//power of 2 number of bits would unnecessarily need an extra bit without this
-	lz := b.LeadingZeros64(uint64(bits) - 1)
-	needs := 64 - lz
+	needs := b.Len64(uint64(bits) - 1)
 	if needs*hashes > 64 {
 		//TODO do 2 hashes?
 		panic("too... much... data...")
