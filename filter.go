@@ -22,7 +22,7 @@ func NewFilter(bits, hashes int) *Filter {
 	}
 
 	//-1 because arrays are 0 idexed
-	//power of 2 number of bits would need an extra bit without this
+	//power of 2 number of bits would unnecessarily need an extra bit without this
 	lz := b.LeadingZeros64(uint64(bits) - 1)
 	needs := 64 - lz
 	if needs*hashes > 64 {
@@ -50,12 +50,7 @@ func (f *Filter) LookupString(s string) bool {
 	hash := maphash.String(f.seed, s)
 	h := f.hashToIndexes(hash)
 
-	for _, v := range h {
-		if !f.isSet(v) {
-			return false
-		}
-	}
-	return true
+	return f.lookup(h)
 }
 
 func (f *Filter) AddBytes(b []byte) {
@@ -71,12 +66,7 @@ func (f *Filter) LookupBytes(b []byte) bool {
 	hash := maphash.Bytes(f.seed, b)
 	h := f.hashToIndexes(hash)
 
-	for _, v := range h {
-		if !f.isSet(v) {
-			return false
-		}
-	}
-	return true
+	return f.lookup(h)
 }
 
 func (f *Filter) hashToIndexes(hash uint64) []int {
@@ -105,13 +95,18 @@ func (f *Filter) set(i int) {
 	f.state[bucket] |= mask
 }
 
-func (f *Filter) isSet(i int) bool {
-	bucket := i / 8
-	shift := i % 8
+func (f *Filter) lookup(idx []int) bool {
+	for _, v := range idx {
+		bucket := v / 8
+		shift := v % 8
 
-	mask := uint8(1 << shift)
+		mask := uint8(1 << shift)
 
-	set := f.state[bucket]&mask != 0
+		set := f.state[bucket]&mask != 0
+		if !set {
+			return false
+		}
+	}
 
-	return set
+	return true
 }
