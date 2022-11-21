@@ -82,7 +82,7 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 		h %= max
 		idx = append(idx, int(h))
 
-		hash >>= bph
+		hash = b.RotateLeft64(hash, bph)
 	}
 
 	return idx
