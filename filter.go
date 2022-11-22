@@ -83,19 +83,17 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 	idx := make([]int, 0, 8)
 
 	for i := 0; i < f.nhsh; i++ {
+		if i != 0 && i%f.ibf == 0 {
+			//shuffles the bits everytime we consume everything
+			hash *= 0xc67c_2dcb_6b04_ebb5 //got this from /dev/urandom
+		}
+
 		h := (hash & mask) % max
 		idx = append(idx, int(h))
 
 		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
 		hash = b.RotateLeft64(hash, f.bph)
-
-		//this if enters everytime we consume all the bits on the hash var
-		//we use i+1 because i being 0 would make the shuffle happen on the first iteration
-		//and we don't want that
-		if (i+1)%f.ibf == 0 {
-			hash *= 0xc67c_2dcb_6b04_ebb5 //got this from /dev/urandom
-		}
 	}
 
 	return idx
