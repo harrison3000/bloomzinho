@@ -22,6 +22,7 @@ func NewFilter(bits, hashes int) *Filter {
 		panic("params needs to be a higher than 0")
 	}
 
+	//round the number of bits to the next multiple of bpd
 	if mod := bits % bpb; mod != 0 {
 		bits += bpb - mod
 	}
@@ -82,10 +83,10 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 	idx := make([]int, 0, 8)
 
 	for i := 0; i < f.nhsh; i++ {
-		h := hash & mask
-		h %= max
+		h := (hash & mask) % max
 		idx = append(idx, int(h))
 
+		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
 		hash = b.RotateLeft64(hash, f.bph)
 
