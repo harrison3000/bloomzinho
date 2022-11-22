@@ -8,8 +8,10 @@ import (
 type Filter struct {
 	seed  maphash.Seed
 	state []uint8
-	nhsh  int
-	bph   int
+
+	nhsh int //number of hashes
+	bph  int //bits per hashes (indexes)
+	ibf  int //iterations before shuffling
 }
 
 // bpb is bits per bucket (Filter.state element)
@@ -27,15 +29,14 @@ func NewFilter(bits, hashes int) *Filter {
 	//-1 because arrays are 0 idexed
 	//power of 2 number of bits would unnecessarily need an extra bit without this
 	needs := b.Len64(uint64(bits) - 1)
-	if needs*hashes > 64 {
-		//TODO do 2 hashes?
-		panic("too... much... data...")
-	}
+	iters := 64 / needs
+
 	return &Filter{
 		seed:  maphash.MakeSeed(),
 		state: make([]uint8, bits/bpb),
 		nhsh:  hashes,
 		bph:   needs,
+		ibf:   iters,
 	}
 }
 
@@ -71,8 +72,11 @@ func (f *Filter) LookupBytes(b []byte) bool {
 	return f.lookup(h)
 }
 
+// this function was fine tuned to keep the cost just low enough for inlining
+// inlining avoids the return slice escaping to the heap
+// TODO explain the idea behind shuffling
+// spoiler: something to do with the index orders
 func (f *Filter) hashToIndexes(hash uint64) []int {
-	bph := f.bph
 	max := uint64(len(f.state) * bpb)
 	mask := (uint64(1) << f.bph) - 1
 	idx := make([]int, 0, 8)
@@ -82,7 +86,15 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 		h %= max
 		idx = append(idx, int(h))
 
-		hash = b.RotateLeft64(hash, bph)
+		//we rotate instead of shifting because we want to keep the bits fo shuffling later
+		hash = b.RotateLeft64(hash, f.bph)
+
+		//this if enters everytime we consume all the bits on the hash var
+		//we use i+1 because i being 0 would make the shuffle happen on the first iteration
+		//and we don't want that
+		if (i+1)%f.ibf == 0 {
+			hash *= 0xc67c_2dcb_6b04_ebb5 //got this from /dev/urandom
+		}
 	}
 
 	return idx

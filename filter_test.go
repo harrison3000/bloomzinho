@@ -25,6 +25,20 @@ func TestTrivial(t *testing.T) {
 	assert.True(t, f.LookupBytes([]byte("okay")))
 }
 
+func TestSingleBit(t *testing.T) {
+	//this test ensures that the loop is not off by one
+
+	f := NewFilter(256, 1)
+
+	h := f.hashToIndexes(23)
+	assert.Len(t, h, 1)
+
+	f.AddString("hi")
+
+	assert.False(t, f.LookupString("hello"))
+	assert.True(t, f.LookupString("hi"))
+}
+
 func TestLookup(t *testing.T) {
 	qtd := 257
 	nud := []int{63, 47, 94}
@@ -77,7 +91,7 @@ func BenchmarkFalsePositive(b *testing.B) {
 	for t := 0; t < b.N; t++ {
 		b.StopTimer()
 		seed()
-		f := NewFilter(4096, 4)
+		f := NewFilter(4094, 7)
 		for i := 0; i < 128; i++ {
 			st := gimme(16)
 			f.AddString(st)
