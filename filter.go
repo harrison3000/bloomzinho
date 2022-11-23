@@ -73,10 +73,16 @@ func (f *Filter) LookupBytes(b []byte) bool {
 	return f.lookup(h)
 }
 
+// hashToIndexes as the name says, gets a 64bit hash and turns them into bitfield indexes
+//
+// all indexes are derived from the same 64 bits
+// when all bits have been consumed we just shuffle them and keep going...
+// this seem good enough, as long as TestBigHashShuffle passes, it should be fine
+// unless the number of items is so big (4 billion?) that they start coliding
+// on the original 64bit hash
+//
 // this function was fine tuned to keep the cost just low enough for inlining
 // inlining avoids the return slice escaping to the heap
-// TODO explain the idea behind shuffling
-// spoiler: something to do with the index orders
 func (f *Filter) hashToIndexes(hash uint64) []uint {
 	max := uint64(len(f.state) * bpb)
 	mask := (uint64(1) << f.bph) - 1

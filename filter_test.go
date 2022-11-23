@@ -57,7 +57,8 @@ func TestLookup(t *testing.T) {
 	assert.True(t, f.lookup(nud))
 }
 
-func TestBigHash(t *testing.T) {
+func TestBigHashShuffle(t *testing.T) {
+	//4 groups of 16bit numbers, but on different order
 	a := uint64(0x1234_5678_9abc_def0)
 	b := uint64(0x5678_def0_9abc_1234)
 
@@ -65,6 +66,7 @@ func TestBigHash(t *testing.T) {
 	a4 := f.hashToIndexes(a)
 	b4 := f.hashToIndexes(b)
 
+	//even though the hashes are different, the indexes end up being the same thing...
 	assert.ElementsMatch(t, a4, b4)
 
 	f = NewFilter(1<<16, 8)
@@ -74,6 +76,7 @@ func TestBigHash(t *testing.T) {
 	slices.Sort(a8)
 	slices.Sort(b8)
 
+	//..however the indexes after the shuffle must be different
 	assert.NotEqual(t, a8, b8)
 }
 
