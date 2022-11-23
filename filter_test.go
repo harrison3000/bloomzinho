@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/slices"
 )
 
 func TestTrivial(t *testing.T) {
@@ -54,6 +55,26 @@ func TestLookup(t *testing.T) {
 	assert.False(t, f.lookup(nil))
 	assert.True(t, f.lookup(nud[:2]))
 	assert.True(t, f.lookup(nud))
+}
+
+func TestBigHash(t *testing.T) {
+	a := uint64(0x1234_5678_9abc_def0)
+	b := uint64(0x5678_def0_9abc_1234)
+
+	f := NewFilter(1<<16, 4)
+	a4 := f.hashToIndexes(a)
+	b4 := f.hashToIndexes(b)
+
+	assert.ElementsMatch(t, a4, b4)
+
+	f = NewFilter(1<<16, 8)
+	a8 := f.hashToIndexes(a)
+	b8 := f.hashToIndexes(b)
+
+	slices.Sort(a8)
+	slices.Sort(b8)
+
+	assert.NotEqual(t, a8, b8)
 }
 
 func BenchmarkTrivial(b *testing.B) {
