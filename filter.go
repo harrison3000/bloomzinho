@@ -77,10 +77,10 @@ func (f *Filter) LookupBytes(b []byte) bool {
 // inlining avoids the return slice escaping to the heap
 // TODO explain the idea behind shuffling
 // spoiler: something to do with the index orders
-func (f *Filter) hashToIndexes(hash uint64) []int {
+func (f *Filter) hashToIndexes(hash uint64) []uint {
 	max := uint64(len(f.state) * bpb)
 	mask := (uint64(1) << f.bph) - 1
-	idx := make([]int, 0, 8)
+	idx := make([]uint, 0, 8)
 
 	for i := 0; i < f.nhsh; i++ {
 		if i != 0 && i%f.ibf == 0 {
@@ -89,7 +89,7 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 		}
 
 		h := (hash & mask) % max
-		idx = append(idx, int(h))
+		idx = append(idx, uint(h))
 
 		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
@@ -99,7 +99,7 @@ func (f *Filter) hashToIndexes(hash uint64) []int {
 	return idx
 }
 
-func (f *Filter) set(i int) {
+func (f *Filter) set(i uint) {
 	bucket := i / bpb
 	shift := i % bpb
 
@@ -108,7 +108,7 @@ func (f *Filter) set(i int) {
 	f.state[bucket] |= mask
 }
 
-func (f *Filter) lookup(idx []int) bool {
+func (f *Filter) lookup(idx []uint) bool {
 	for _, v := range idx {
 		bucket := v / bpb
 		shift := v % bpb
