@@ -1,5 +1,7 @@
 package bloomzinho
 
+import "errors"
+
 func parsEq(a, b *Filter) bool {
 	if a == b {
 		return true
@@ -8,9 +10,8 @@ func parsEq(a, b *Filter) bool {
 	return a.filterParams == b.filterParams
 }
 
-//TODO add union and intersection
-
 func (f *Filter) Intersects(b *Filter) bool {
+	//TODO check for f == b
 	if !parsEq(f, b) {
 		return false
 	}
@@ -23,4 +24,35 @@ func (f *Filter) Intersects(b *Filter) bool {
 	}
 
 	return false
+}
+
+func copyFilterFunc(a, b *Filter, cb func(_, _ bucket_t) bucket_t) (*Filter, error) {
+	if a == nil || b == nil {
+		return nil, errors.New("one of the input filters is nil")
+	}
+	if !parsEq(a, b) {
+		return nil, errors.New("both filters must have the same dimensions")
+	}
+	ret := &Filter{
+		filterParams: a.filterParams,
+		state:        make([]bucket_t, len(a.state)),
+	}
+
+	for i := range ret.state {
+		ret.state[i] = cb(a.state[i], b.state[i])
+	}
+
+	return ret, nil
+}
+
+func NewUnion(a, b *Filter) (*Filter, error) {
+	return copyFilterFunc(a, b, func(ab, bb bucket_t) bucket_t {
+		return ab | bb
+	})
+}
+
+func NewIntersection(a, b *Filter) (*Filter, error) {
+	return copyFilterFunc(a, b, func(ab, bb bucket_t) bucket_t {
+		return ab & bb
+	})
 }

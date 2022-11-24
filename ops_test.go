@@ -35,3 +35,5 @@ func BenchmarkIntersects(b *testing.B) {
 		a.Intersects(f)
 	}
 }
+
+//TODO newunion and newintersection tests
