@@ -1,4 +1,4 @@
-module bloomzinho
+module github.com/harrison3000/bloomzinho
 
 go 1.19
 
