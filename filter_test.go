@@ -8,6 +8,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+//TODO test ensuring we don't make any alloc
+
 func TestTrivial(t *testing.T) {
 	f := NewFilter(256, 3)
 

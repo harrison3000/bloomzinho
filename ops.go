@@ -5,7 +5,7 @@ func parsEq(a, b *Filter) bool {
 		return true
 	}
 
-	return a.filterParams == b.filterParams && len(a.state) == len(b.state)
+	return a.filterParams == b.filterParams
 }
 
 //TODO add union and intersection

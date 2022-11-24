@@ -8,6 +8,7 @@ type filterParams struct {
 	nhsh int //number of hashes
 	bph  int //bits per hashes (indexes)
 	ibf  int //iterations before shuffling
+	len  int //number of bits
 }
 
 type bucket_t uint64
@@ -42,6 +43,7 @@ func NewFilter(bits, hashes int) *Filter {
 			nhsh: hashes,
 			bph:  needs,
 			ibf:  iters,
+			len:  bits,
 		},
 	}
 }
@@ -88,8 +90,8 @@ func (f *Filter) LookupBytes(b []byte) bool {
 //
 // this function was fine tuned to keep the cost just low enough for inlining
 // inlining avoids the return slice escaping to the heap
-func (f *Filter) hashToIndexes(hash uint64) []uint {
-	max := uint64(len(f.state) * bpb)
+func (f *filterParams) hashToIndexes(hash uint64) []uint {
+	max := uint64(f.len)
 	mask := (uint64(1) << f.bph) - 1
 	idx := make([]uint, 0, 8)
 
