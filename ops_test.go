@@ -20,3 +20,18 @@ func TestIntersectSimple(t *testing.T) {
 
 	assert.True(t, a.Intersects(b))
 }
+
+func BenchmarkIntersects(b *testing.B) {
+	a := NewFilter(32768, 2)
+	f := NewFilter(32768, 2)
+
+	a.AddString("Ehh")
+	//f.AddString("Ehh")
+	f.AddString("Ohh")
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		a.Intersects(f)
+	}
+}

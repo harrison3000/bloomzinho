@@ -10,14 +10,16 @@ type filterParams struct {
 	ibf  int //iterations before shuffling
 }
 
+type bucket_t uint64
+
 type Filter struct {
-	state []uint8
+	state []bucket_t
 
 	filterParams
 }
 
 // bpb is bits per bucket (Filter.state element)
-const bpb = 8
+const bpb = 64
 
 func NewFilter(bits, hashes int) *Filter {
 	if bits < 1 || hashes < 1 {
@@ -35,7 +37,7 @@ func NewFilter(bits, hashes int) *Filter {
 	iters := 64 / needs
 
 	return &Filter{
-		state: make([]uint8, bits/bpb),
+		state: make([]bucket_t, bits/bpb),
 		filterParams: filterParams{
 			nhsh: hashes,
 			bph:  needs,
@@ -112,7 +114,7 @@ func (f *Filter) set(i uint) {
 	bucket := i / bpb
 	shift := i % bpb
 
-	mask := uint8(1 << shift)
+	mask := bucket_t(1 << shift)
 
 	f.state[bucket] |= mask
 }
@@ -122,7 +124,7 @@ func (f *Filter) lookup(idx []uint) bool {
 		bucket := v / bpb
 		shift := v % bpb
 
-		mask := uint8(1 << shift)
+		mask := bucket_t(1 << shift)
 
 		set := f.state[bucket]&mask != 0
 		if !set {
