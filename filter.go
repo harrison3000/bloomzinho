@@ -4,12 +4,16 @@ import (
 	b "math/bits"
 )
 
-type Filter struct {
-	state []uint8
-
+type filterParams struct {
 	nhsh int //number of hashes
 	bph  int //bits per hashes (indexes)
 	ibf  int //iterations before shuffling
+}
+
+type Filter struct {
+	state []uint8
+
+	filterParams
 }
 
 // bpb is bits per bucket (Filter.state element)
@@ -32,9 +36,11 @@ func NewFilter(bits, hashes int) *Filter {
 
 	return &Filter{
 		state: make([]uint8, bits/bpb),
-		nhsh:  hashes,
-		bph:   needs,
-		ibf:   iters,
+		filterParams: filterParams{
+			nhsh: hashes,
+			bph:  needs,
+			ibf:  iters,
+		},
 	}
 }
 
