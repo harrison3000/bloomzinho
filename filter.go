@@ -1,12 +1,10 @@
 package bloomzinho
 
 import (
-	"hash/maphash"
 	b "math/bits"
 )
 
 type Filter struct {
-	seed  maphash.Seed
 	state []uint8
 
 	nhsh int //number of hashes
@@ -33,7 +31,6 @@ func NewFilter(bits, hashes int) *Filter {
 	iters := 64 / needs
 
 	return &Filter{
-		seed:  maphash.MakeSeed(),
 		state: make([]uint8, bits/bpb),
 		nhsh:  hashes,
 		bph:   needs,
@@ -42,7 +39,7 @@ func NewFilter(bits, hashes int) *Filter {
 }
 
 func (f *Filter) AddString(s string) {
-	hash := maphash.String(f.seed, s)
+	hash := hashS(s)
 	h := f.hashToIndexes(hash)
 
 	for _, v := range h {
@@ -51,14 +48,14 @@ func (f *Filter) AddString(s string) {
 }
 
 func (f *Filter) LookupString(s string) bool {
-	hash := maphash.String(f.seed, s)
+	hash := hashS(s)
 	h := f.hashToIndexes(hash)
 
 	return f.lookup(h)
 }
 
 func (f *Filter) AddBytes(b []byte) {
-	hash := maphash.Bytes(f.seed, b)
+	hash := hashB(b)
 	h := f.hashToIndexes(hash)
 
 	for _, v := range h {
@@ -67,7 +64,7 @@ func (f *Filter) AddBytes(b []byte) {
 }
 
 func (f *Filter) LookupBytes(b []byte) bool {
-	hash := maphash.Bytes(f.seed, b)
+	hash := hashB(b)
 	h := f.hashToIndexes(hash)
 
 	return f.lookup(h)
