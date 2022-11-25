@@ -3,16 +3,16 @@ package bloomzinho
 import "errors"
 
 func parsEq(a, b *Filter) bool {
-	if a == b {
-		return true
-	}
-
 	return a.filterParams == b.filterParams
 }
 
 func (f *Filter) Intersects(b *Filter) bool {
-	//TODO check for f == b
 	if !parsEq(f, b) {
+		return false
+	}
+
+	if len(f.state) != len(b.state) {
+		//this helps the bound checker
 		return false
 	}
 
