@@ -3,7 +3,12 @@ package bloomzinho
 import "errors"
 
 func parsEq(a, b *Filter) bool {
-	return a.filterParams == b.filterParams
+	ap := a.filterParams
+	bp := b.filterParams
+
+	//we only compare the number of hashes and number of bits
+	//the other values are derived from these 2 anyway
+	return ap.nhsh == bp.nhsh && ap.len == bp.len
 }
 
 func (f *Filter) Intersects(b *Filter) bool {

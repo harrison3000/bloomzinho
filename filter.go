@@ -6,9 +6,9 @@ import (
 
 type filterParams struct {
 	nhsh int //number of hashes
+	len  int //number of bits
 	bph  int //bits per hashes (indexes)
 	ibf  int //iterations before shuffling
-	len  int //number of bits
 }
 
 type bucket_t uint64
