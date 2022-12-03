@@ -52,9 +52,7 @@ func (f *Filter) AddString(s string) {
 	hash := hashS(s)
 	h := f.hashToIndexes(hash)
 
-	for _, v := range h {
-		f.set(v)
-	}
+	f.set(h)
 }
 
 func (f *Filter) LookupString(s string) bool {
@@ -68,9 +66,7 @@ func (f *Filter) AddBytes(b []byte) {
 	hash := hashB(b)
 	h := f.hashToIndexes(hash)
 
-	for _, v := range h {
-		f.set(v)
-	}
+	f.set(h)
 }
 
 func (f *Filter) LookupBytes(b []byte) bool {
@@ -112,13 +108,15 @@ func (f *filterParams) hashToIndexes(hash uint64) []uint {
 	return idx
 }
 
-func (f *Filter) set(i uint) {
-	bucket := i / bpb
-	shift := i % bpb
+func (f *Filter) set(idx []uint) {
+	for _, i := range idx {
+		bucket := i / bpb
+		shift := i % bpb
 
-	mask := bucket_t(1 << shift)
+		mask := bucket_t(1 << shift)
 
-	f.state[bucket] |= mask
+		f.state[bucket] |= mask
+	}
 }
 
 func (f *Filter) lookup(idx []uint) bool {
