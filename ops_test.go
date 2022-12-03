@@ -36,4 +36,5 @@ func BenchmarkIntersects(b *testing.B) {
 	}
 }
 
+//TODO examples
 //TODO newunion and newintersection tests

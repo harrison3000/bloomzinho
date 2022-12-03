@@ -11,6 +11,13 @@ func parsEq(a, b *Filter) bool {
 	return ap.nhsh == bp.nhsh && ap.len == bp.len
 }
 
+// Intersects tests if the filter intersects with another given filter "b"
+// 2 filters intersecting means that a value that was added to one filter was probably also added to the other
+//
+// this function is useful if you have a set of values that you want to test against a bunch of filters
+// it's more efficient to make a new filter and test for intersection than to do multiple lookups
+//
+// if the 2 filters being tested have different size or number of hashes, this method gives a false positive
 func (f *Filter) Intersects(b *Filter) bool {
 	if !parsEq(f, b) {
 		return true

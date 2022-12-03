@@ -7,3 +7,8 @@ A very simple bloom filter
 * No external dependencies, only standard library
 * Kinda fast
 * Made in Brazil
+
+## TODO
+
+* Better documentation
+* "Contains" method
