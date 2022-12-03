@@ -13,12 +13,12 @@ func parsEq(a, b *Filter) bool {
 
 func (f *Filter) Intersects(b *Filter) bool {
 	if !parsEq(f, b) {
-		return false
+		return true
 	}
 
 	if len(f.state) != len(b.state) {
 		//this helps the bound checker
-		return false
+		return true
 	}
 
 	for i := range f.state {
