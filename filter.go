@@ -7,8 +7,6 @@ import (
 type filterParams struct {
 	nhsh int //number of hashes
 	len  int //number of bits
-	bph  int //bits per hashes (indexes)
-	ibf  int //iterations before shuffling
 }
 
 type bucket_t uint64
@@ -16,6 +14,8 @@ type bucket_t uint64
 type Filter struct {
 	state []bucket_t
 
+	bph int //bits per hashes (indexes)
+	ibf int //iterations before shuffling
 	filterParams
 }
 
@@ -39,10 +39,10 @@ func NewFilter(bits, hashes int) *Filter {
 
 	return &Filter{
 		state: make([]bucket_t, bits/bpb),
+		bph:   needs,
+		ibf:   iters,
 		filterParams: filterParams{
 			nhsh: hashes,
-			bph:  needs,
-			ibf:  iters,
 			len:  bits,
 		},
 	}
