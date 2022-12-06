@@ -8,6 +8,18 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// TODO refactor all the tests
+
+// hashToIndexes only exists because it is used in a test below
+func (f *Filter) hashToIndexes(hash uint64) []uint {
+	idx := make([]uint, 0, 8)
+	f.hashTransform(hash, func(u uint) {
+		idx = append(idx, u)
+	})
+
+	return idx
+}
+
 func TestTrivial(t *testing.T) {
 	f := NewFilter(256, 3)
 
@@ -50,12 +62,21 @@ func TestLookup(t *testing.T) {
 		f.set(v)
 	}
 
-	assert.False(t, f.lookup([]uint{63, 25}))
-	assert.False(t, f.lookup([]uint{63, 47, 94, 2}))
-	assert.False(t, f.lookup([]uint{0}))
-	assert.False(t, f.lookup(nil))
-	assert.True(t, f.lookup(nud[:2]))
-	assert.True(t, f.lookup(nud))
+	lookup := func(idx []uint) bool {
+		for _, v := range idx {
+			if !f.lookup(v) {
+				return false
+			}
+		}
+		return len(idx) != 0
+	}
+
+	assert.False(t, lookup([]uint{63, 25}))
+	assert.False(t, lookup([]uint{63, 47, 94, 2}))
+	assert.False(t, lookup([]uint{0}))
+	assert.False(t, lookup(nil))
+	assert.True(t, lookup(nud[:2]))
+	assert.True(t, lookup(nud))
 }
 
 func TestBigHashShuffle(t *testing.T) {

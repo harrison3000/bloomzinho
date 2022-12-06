@@ -56,9 +56,8 @@ func (f *Filter) AddString(s string) {
 
 func (f *Filter) LookupString(s string) bool {
 	hash := hashS(s)
-	h := f.hashToIndexes(hash)
 
-	return f.lookup(h)
+	return f.lookupHash(hash)
 }
 
 func (f *Filter) AddBytes(b []byte) {
@@ -69,27 +68,28 @@ func (f *Filter) AddBytes(b []byte) {
 
 func (f *Filter) LookupBytes(b []byte) bool {
 	hash := hashB(b)
-	h := f.hashToIndexes(hash)
 
-	return f.lookup(h)
+	return f.lookupHash(hash)
 }
 
-// hashToIndexes as the name says, gets a 64bit hash and turns them into bitfield indexes
+func (f *Filter) lookupHash(hash uint64) bool {
+	ok := true
+	//TODO early termination on fail? is it worth it?
+	f.hashTransform(hash, func(u uint) {
+		ok = f.lookup(u) && ok
+	})
+
+	return ok
+}
+
+// hashTransform gets a 64bit hash and turns it into bitfield indexes
 //
+// for each index the callback function is called
 // all indexes are derived from the same 64 bits
 // when all bits have been consumed we just shuffle them and keep going...
 // this seem good enough, as long as TestBigHashShuffle passes, it should be fine
 // unless the number of items is so big (4 billion?) that they start coliding
 // on the original 64bit hash
-func (f *Filter) hashToIndexes(hash uint64) []uint {
-	idx := make([]uint, 0, 8)
-	f.hashTransform(hash, func(u uint) {
-		idx = append(idx, u)
-	})
-
-	return idx
-}
-
 func (f *Filter) hashTransform(hash uint64, cb func(uint)) {
 	max := uint64(f.len)
 	mask := (uint64(1) << f.bph) - 1
@@ -105,6 +105,7 @@ func (f *Filter) hashTransform(hash uint64, cb func(uint)) {
 
 		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
+		//also, rotating is somehow faster than shiffting 🤷
 		hash = b.RotateLeft64(hash, f.bph)
 	}
 }
@@ -118,18 +119,12 @@ func (f *Filter) set(i uint) {
 	f.state[bucket] |= mask
 }
 
-func (f *Filter) lookup(idx []uint) bool {
-	for _, v := range idx {
-		bucket := v / bpb
-		shift := v % bpb
+func (f *Filter) lookup(i uint) bool {
+	bucket := i / bpb
+	shift := i % bpb
 
-		mask := bucket_t(1 << shift)
+	mask := bucket_t(1 << shift)
 
-		set := f.state[bucket]&mask != 0
-		if !set {
-			return false
-		}
-	}
-
-	return len(idx) != 0
+	set := f.state[bucket]&mask != 0
+	return set
 }
