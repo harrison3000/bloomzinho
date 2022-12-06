@@ -83,13 +83,18 @@ func (f *Filter) LookupBytes(b []byte) bool {
 // this seem good enough, as long as TestBigHashShuffle passes, it should be fine
 // unless the number of items is so big (4 billion?) that they start coliding
 // on the original 64bit hash
-//
-// this function was fine tuned to keep the cost just low enough for inlining
-// inlining avoids the return slice escaping to the heap
-func (f *filterParams) hashToIndexes(hash uint64) []uint {
+func (f *Filter) hashToIndexes(hash uint64) []uint {
+	idx := make([]uint, 0, 8)
+	f.hashTransform(hash, func(u uint) {
+		idx = append(idx, u)
+	})
+
+	return idx
+}
+
+func (f *Filter) hashTransform(hash uint64, cb func(uint)) {
 	max := uint64(f.len)
 	mask := (uint64(1) << f.bph) - 1
-	idx := make([]uint, 0, 8)
 
 	for i := 0; i < f.nhsh; i++ {
 		if i != 0 && i%f.ibf == 0 {
@@ -98,14 +103,12 @@ func (f *filterParams) hashToIndexes(hash uint64) []uint {
 		}
 
 		h := (hash & mask) % max
-		idx = append(idx, uint(h))
+		cb(uint(h))
 
 		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
 		hash = b.RotateLeft64(hash, f.bph)
 	}
-
-	return idx
 }
 
 func (f *Filter) set(idx []uint) {
