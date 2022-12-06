@@ -10,16 +10,6 @@ import (
 
 // TODO refactor all the tests
 
-// hashToIndexes only exists because it is used in a test below
-func (f *Filter) hashToIndexes(hash uint64) []uint {
-	idx := make([]uint, 0, 8)
-	f.hashTransform(hash, func(u uint) {
-		idx = append(idx, u)
-	})
-
-	return idx
-}
-
 func TestTrivial(t *testing.T) {
 	f := NewFilter(256, 3)
 
@@ -40,11 +30,7 @@ func TestTrivial(t *testing.T) {
 
 func TestSingleBit(t *testing.T) {
 	//this test ensures that the loop is not off by one
-
 	f := NewFilter(256, 1)
-
-	h := f.hashToIndexes(23)
-	assert.Len(t, h, 1)
 
 	f.AddString("hi")
 
@@ -53,53 +39,50 @@ func TestSingleBit(t *testing.T) {
 }
 
 func TestLookup(t *testing.T) {
-	qtd := 257
-	nud := []uint{63, 47, 94}
+	f := NewFilter(257, 1)
 
-	f := NewFilter(qtd, 1)
+	f.set(63)
+	f.set(94)
+	f.set(260) //we give some bits more, the number is always a multiple of 64
 
-	for _, v := range nud {
-		f.set(v)
-	}
-
-	lookup := func(idx []uint) bool {
-		for _, v := range idx {
-			if !f.lookup(v) {
-				return false
-			}
-		}
-		return len(idx) != 0
-	}
-
-	assert.False(t, lookup([]uint{63, 25}))
-	assert.False(t, lookup([]uint{63, 47, 94, 2}))
-	assert.False(t, lookup([]uint{0}))
-	assert.False(t, lookup(nil))
-	assert.True(t, lookup(nud[:2]))
-	assert.True(t, lookup(nud))
+	assert.False(t, f.lookup(25))
+	assert.False(t, f.lookup(0))
+	assert.False(t, f.lookup(64))
+	assert.True(t, f.lookup(63))
+	assert.True(t, f.lookup(94))
+	assert.True(t, f.lookup(260))
 }
 
 func TestBigHashShuffle(t *testing.T) {
+	//this test ensures the shuffle really does something
+
 	//4 groups of 16bit numbers, but on different order
 	a := uint64(0x1234_5678_9abc_def0)
 	b := uint64(0x5678_def0_9abc_1234)
 
 	f := NewFilter(1<<16, 4)
-	a4 := f.hashToIndexes(a)
-	b4 := f.hashToIndexes(b)
 
-	//even though the hashes are different, the indexes end up being the same thing...
-	assert.ElementsMatch(t, a4, b4)
+	hToIdx := func(hash uint64) (idx []uint) {
+		f.hashTransform(hash, func(u uint) {
+			idx = append(idx, u)
+		})
+		slices.Sort(idx)
+		return
+	}
+
+	a4 := hToIdx(a)
+	b4 := hToIdx(b)
+
+	//even though the hashes are different,
+	//the indexes end up being the same thing...
+	assert.Equal(t, a4, b4)
 
 	f = NewFilter(1<<16, 8)
-	a8 := f.hashToIndexes(a)
-	b8 := f.hashToIndexes(b)
-
-	slices.Sort(a8)
-	slices.Sort(b8)
+	a8 := hToIdx(a)
+	b8 := hToIdx(b)
 
 	//..however the indexes after the shuffle must be different
-	assert.NotEqual(t, a8, b8)
+	assert.NotEqual(t, a8, b8, "the bit shuffle is not working")
 }
 
 func BenchmarkTrivial(b *testing.B) {
