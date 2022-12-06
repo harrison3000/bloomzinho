@@ -8,8 +8,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-//TODO test ensuring we don't make any alloc
-
 func TestTrivial(t *testing.T) {
 	f := NewFilter(256, 3)
 
@@ -133,4 +131,24 @@ func BenchmarkFalsePositive(b *testing.B) {
 	}
 
 	b.ReportMetric((positive/total)*100, "%FalsePositives")
+}
+
+func TestNoAlloc(t *testing.T) {
+	//this test ensures that we don't make any alocations
+	//other than when making the filter, of course
+
+	f := NewFilter(256, 1)
+	fb := NewFilter(256, 1)
+
+	a := testing.AllocsPerRun(5, func() {
+		f.AddBytes([]byte("high"))
+		fb.AddString("low")
+
+		f.LookupBytes([]byte("why?"))
+		fb.LookupString("I don't know")
+
+		f.Intersects(fb)
+	})
+
+	assert.Zero(t, a, "Allocations made on methods that should be zero alloc")
 }
