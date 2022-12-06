@@ -46,7 +46,9 @@ func TestLookup(t *testing.T) {
 
 	f := NewFilter(qtd, 1)
 
-	f.set(nud)
+	for _, v := range nud {
+		f.set(v)
+	}
 
 	assert.False(t, f.lookup([]uint{63, 25}))
 	assert.False(t, f.lookup([]uint{63, 47, 94, 2}))
