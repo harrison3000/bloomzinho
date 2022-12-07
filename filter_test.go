@@ -11,7 +11,8 @@ import (
 // TODO refactor all the tests
 
 func TestTrivial(t *testing.T) {
-	f := NewFilter(256, 3)
+	f, e := NewFilter(256, 3)
+	assert.NoError(t, e)
 
 	f.AddString("hellow")
 	f.AddString("okay")
@@ -30,7 +31,7 @@ func TestTrivial(t *testing.T) {
 
 func TestSingleBit(t *testing.T) {
 	//this test ensures that the loop is not off by one
-	f := NewFilter(256, 1)
+	f, _ := NewFilter(256, 1)
 
 	f.AddString("hi")
 
@@ -39,7 +40,7 @@ func TestSingleBit(t *testing.T) {
 }
 
 func TestLookup(t *testing.T) {
-	f := NewFilter(257, 1)
+	f, _ := NewFilter(257, 1)
 
 	f.set(63)
 	f.set(94)
@@ -60,7 +61,7 @@ func TestBigHashShuffle(t *testing.T) {
 	a := uint64(0x1234_5678_9abc_def0)
 	b := uint64(0x5678_def0_9abc_1234)
 
-	f := NewFilter(1<<16, 4)
+	f, _ := NewFilter(1<<16, 4)
 
 	hToIdx := func(hash uint64) (idx []uint) {
 		f.hashTransform(hash, func(u uint) {
@@ -77,7 +78,7 @@ func TestBigHashShuffle(t *testing.T) {
 	//the indexes end up being the same thing...
 	assert.Equal(t, a4, b4)
 
-	f = NewFilter(1<<16, 8)
+	f, _ = NewFilter(1<<16, 8)
 	a8 := hToIdx(a)
 	b8 := hToIdx(b)
 
@@ -85,8 +86,15 @@ func TestBigHashShuffle(t *testing.T) {
 	assert.NotEqual(t, a8, b8, "the bit shuffle is not working")
 }
 
+func TestError(t *testing.T) {
+	f, e := NewFilter(0, 0)
+
+	assert.Nil(t, f)
+	assert.Error(t, e)
+}
+
 func BenchmarkTrivial(b *testing.B) {
-	f := NewFilter(9585059, 7)
+	f, _ := NewFilter(9585059, 7)
 
 	f.AddString("whatever")
 
@@ -120,7 +128,7 @@ func BenchmarkFalsePositive(b *testing.B) {
 	for t := 0; t < b.N; t++ {
 		b.StopTimer()
 		seed()
-		f := NewFilter(4094, 7)
+		f, _ := NewFilter(4094, 7)
 		for i := 0; i < 128; i++ {
 			st := gimme(16)
 			f.AddString(st)
@@ -143,8 +151,8 @@ func TestNoAlloc(t *testing.T) {
 	//this test ensures that we don't make any alocations
 	//other than when making the filter, of course
 
-	f := NewFilter(256, 1)
-	fb := NewFilter(256, 1)
+	f, _ := NewFilter(256, 1)
+	fb, _ := NewFilter(256, 1)
 
 	a := testing.AllocsPerRun(5, func() {
 		f.AddBytes([]byte("high"))

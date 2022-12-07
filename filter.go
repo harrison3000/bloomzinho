@@ -1,6 +1,7 @@
 package bloomzinho
 
 import (
+	"errors"
 	b "math/bits"
 )
 
@@ -22,9 +23,9 @@ type Filter struct {
 // bpb is bits per bucket (Filter.state element)
 const bpb = 64
 
-func NewFilter(bits, hashes int) *Filter {
+func NewFilter(bits, hashes int) (*Filter, error) {
 	if bits < 1 || hashes < 1 {
-		panic("params needs to be a higher than 0")
+		return nil, errors.New("params needs to be a higher than 0")
 	}
 
 	//round the number of bits to the next multiple of bpd
@@ -45,7 +46,7 @@ func NewFilter(bits, hashes int) *Filter {
 			nhsh: hashes,
 			len:  bits,
 		},
-	}
+	}, nil
 }
 
 func (f *Filter) AddString(s string) {

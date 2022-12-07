@@ -7,8 +7,8 @@ import (
 )
 
 func TestIntersectSimple(t *testing.T) {
-	a := NewFilter(32768, 2)
-	b := NewFilter(32768, 2)
+	a, _ := NewFilter(32768, 2)
+	b, _ := NewFilter(32768, 2)
 
 	a.AddString("Vem meu amor")
 	b.AddString("Me tirar da solidão")
@@ -22,8 +22,8 @@ func TestIntersectSimple(t *testing.T) {
 }
 
 func BenchmarkIntersects(b *testing.B) {
-	a := NewFilter(32768, 2)
-	f := NewFilter(32768, 2)
+	a, _ := NewFilter(32768, 2)
+	f, _ := NewFilter(32768, 2)
 
 	a.AddString("Ehh")
 	//f.AddString("Ehh")
