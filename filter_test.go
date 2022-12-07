@@ -64,8 +64,9 @@ func TestBigHashShuffle(t *testing.T) {
 	f, _ := NewFilter(1<<16, 4)
 
 	hToIdx := func(hash uint64) (idx []uint) {
-		f.hashTransform(hash, func(u uint) {
+		f.hashTransform(hash, func(u uint) bool {
 			idx = append(idx, u)
+			return true
 		})
 		slices.Sort(idx)
 		return

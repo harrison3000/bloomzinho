@@ -58,7 +58,7 @@ func (f *Filter) AddString(s string) {
 func (f *Filter) LookupString(s string) bool {
 	hash := hashS(s)
 
-	return f.lookupHash(hash)
+	return f.hashTransform(hash, f.lookup)
 }
 
 func (f *Filter) AddBytes(b []byte) {
@@ -70,17 +70,7 @@ func (f *Filter) AddBytes(b []byte) {
 func (f *Filter) LookupBytes(b []byte) bool {
 	hash := hashB(b)
 
-	return f.lookupHash(hash)
-}
-
-func (f *Filter) lookupHash(hash uint64) bool {
-	ok := true
-	//TODO early termination on fail? is it worth it?
-	f.hashTransform(hash, func(u uint) {
-		ok = f.lookup(u) && ok
-	})
-
-	return ok
+	return f.hashTransform(hash, f.lookup)
 }
 
 // hashTransform gets a 64bit hash and turns it into bitfield indexes
@@ -89,9 +79,9 @@ func (f *Filter) lookupHash(hash uint64) bool {
 // all indexes are derived from the same 64 bits
 // when all bits have been consumed we just shuffle them and keep going...
 // this seem good enough, as long as TestBigHashShuffle passes, it should be fine
-// unless the number of items is so big (4 billion?) that they start coliding
-// on the original 64bit hash
-func (f *Filter) hashTransform(hash uint64, cb func(uint)) {
+// unless the number of items is so big (4 billion, because of the birthday paradox (?))
+// that they start coliding on the original 64bit hash
+func (f *Filter) hashTransform(hash uint64, cb func(uint) bool) bool {
 	max := uint64(f.len)
 	mask := (uint64(1) << f.bph) - 1
 
@@ -102,22 +92,28 @@ func (f *Filter) hashTransform(hash uint64, cb func(uint)) {
 		}
 
 		h := (hash & mask) % max
-		cb(uint(h))
+		if !cb(uint(h)) {
+			return false
+		}
 
 		//rotate to get the next bits
 		//we rotate instead of shifting because we want to keep the bits fo shuffling later
 		//also, rotating is somehow faster than shiffting 🤷
 		hash = b.RotateLeft64(hash, f.bph)
 	}
+
+	return true
 }
 
-func (f *Filter) set(i uint) {
+func (f *Filter) set(i uint) bool {
 	bucket := i / bpb
 	shift := i % bpb
 
 	mask := bucket_t(1 << shift)
 
 	f.state[bucket] |= mask
+
+	return true
 }
 
 func (f *Filter) lookup(i uint) bool {
